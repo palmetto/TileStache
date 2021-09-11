@@ -448,7 +448,7 @@ class Layer:
 
                     tile_from = 'layer.render()'
 
-            except TheTileLeftANote as e:
+            except (TheTileLeftANote, TheServerLeftANote) as e:
                 headers = e.headers
                 status_code = e.status_code
                 body = e.content
@@ -707,14 +707,8 @@ class NoTileLeftBehind(Exception):
         self.tile = tile
         Exception.__init__(self, tile)
 
-class TheTileLeftANote(Exception):
-    """ A tile exists, but it shouldn't be returned to the client. Headers
-        and/or a status code are provided in its stead.
-
-        This exception can be thrown in a provider or a cache to signal to
-        upstream servers where a tile can be found or to clients that a tile
-        is empty (or solid).
-    """
+class SomeoneLeftANote(Exception):
+    """ Base Exception for 'note-leaving' exceptions."""
     def __init__(self, headers=None, status_code=200, content='', emit_content_type=True):
         self.headers = headers or Headers([])
         self.status_code = status_code
@@ -723,6 +717,23 @@ class TheTileLeftANote(Exception):
 
         Exception.__init__(self, self.headers, self.status_code,
                            self.content, self.emit_content_type)
+
+class TheTileLeftANote(SomeoneLeftANote):
+    """ A tile exists, but it shouldn't be returned to the client. Headers
+        and/or a status code are provided in its stead.
+
+        This exception can be thrown in a provider or a cache to signal to
+        upstream servers where a tile can be found or to clients that a tile
+        is empty (or solid).
+    """
+
+class TheServerLeftANote(SomeoneLeftANote):
+    """ A tile couldn't not be retrieved, but the updtreamserver has information
+        about why and it should be passed to the client.
+
+        This exception can be thrown in a provider to signal to clients why a
+        tile is not retrievable.
+    """
 
 def _preview(layer):
     """ Get an HTML response for a given named layer.
@@ -747,12 +758,12 @@ def _preview(layer):
     <script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js"
        integrity="sha512-e+JSf1UWuoLdiGeXXi5byQqIN7ojQLLgvC+aV0w9rnKNwNDBAz99sCgS20+PjT/r+yitmU7kpGVZJQDDgevhoA=="
        crossorigin=""></script>
-    <script src="https://raw.githubusercontent.com/mlevans/leaflet-hash/431bff5c6/leaflet-hash.js"
-       integrity="sha512-2KBa5eJPxTH3HX7jCWrbO+NYNLV8xrnX5lDB7FTs9HFJ8jpO1MTV6MkmNNaia79k+xOk8q965FkqAjwEYCfDAA==">
-       </script>
-    <script src="https://raw.githubusercontent.com/glenrobertson/leaflet-tilelayer-geojson/68b6030a6/TileLayer.GeoJSON.js"
-       integrity="sha512-Ryw/zIuShF0cScpLNLvdbx25oq4ZybL7LXwkfD3dJ++I61D494wmVlf7DjstJn6earWQwpqfGfLioCJ4UT2qVw==">
-       </script>
+    <script src="https://tilestache-resources.s3.amazonaws.com/leaflet-hash-431bff5c6.js"
+       integrity="sha512-2KBa5eJPxTH3HX7jCWrbO+NYNLV8xrnX5lDB7FTs9HFJ8jpO1MTV6MkmNNaia79k+xOk8q965FkqAjwEYCfDAA=="
+       crossorigin=""></script>
+    <script src="https://tilestache-resources.s3.amazonaws.com/TileLayer.GeoJSON-68b6030a6.js"
+       integrity="sha512-Ryw/zIuShF0cScpLNLvdbx25oq4ZybL7LXwkfD3dJ++I61D494wmVlf7DjstJn6earWQwpqfGfLioCJ4UT2qVw=="
+       crossorigin=""></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <style type="text/css">
         html, body, #map {
@@ -775,7 +786,7 @@ def _preview(layer):
     <!--
         var map = L.map('map').setView([%(lat).6f, %(lon).6f], %(zoom)d),
             hash = new L.Hash(map);
-        
+
         if('%(mimetype)s'.match(/^application\/json/))
         {
             L.tileLayer('https://tile-{s}.openstreetmap.fr/hot/{z}/{x}/{y}.png', {

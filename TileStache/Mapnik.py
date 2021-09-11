@@ -16,6 +16,7 @@ import logging
 import json
 
 from .py3_compat import reduce, urlopen, urljoin, urlparse, allocate_lock
+from .py3_compat import unichr
 
 # We enabled absolute_import because case insensitive filesystems
 # cause this file to be loaded twice (the name of this file
@@ -90,7 +91,11 @@ class ImageProvider:
         self.layer = layer
         self.mapnik = None
 
-        engine = mapnik.FontEngine.instance()
+        # Maintain compatiblity between old and new Mapnik FontEngine API
+        try:
+            engine = mapnik.FontEngine.instance()
+        except AttributeError:
+            engine = mapnik.FontEngine
 
         if fonts:
             fontshref = urljoin(layer.config.dirpath, fonts)
@@ -283,7 +288,10 @@ class GridProvider:
 
                     for (index, fields) in self.layers:
                         datasource = self.mapnik.layers[index].datasource
-                        fields = (type(fields) is list) and map(str, fields) or datasource.fields()
+                        if isinstance(fields, list):
+                            fields = [str(f) for f in fields]
+                        else:
+                            fields = datasource.fields()
                         grid = mapnik.Grid(width, height)
                         mapnik.render_layer(self.mapnik, grid, layer=index, fields=fields)
                         grid = grid.encode('utf', resolution=self.scale, features=True)
