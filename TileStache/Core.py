@@ -449,11 +449,11 @@ class Layer:
                     tile_from = 'layer.render()'
 
             except (TheTileLeftANote, TheServerLeftANote) as e:
-                headers = e.headers
                 status_code = e.status_code
                 body = e.content
-
-                if e.emit_content_type and isinstance(e, TheTileLeftANote) :
+                if isinstance(e, TheTileLeftANote):
+                    headers = e.headers
+                if e.emit_content_type:
                     headers.setdefault('Content-Type', mimetype)
 
             finally:
