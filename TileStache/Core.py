@@ -453,7 +453,7 @@ class Layer:
                 status_code = e.status_code
                 body = e.content
 
-                if e.emit_content_type:
+                if e.emit_content_type and isinstance(e, TheTileLeftANote) :
                     headers.setdefault('Content-Type', mimetype)
 
             finally:
