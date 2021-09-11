@@ -453,8 +453,8 @@ class Layer:
                 body = e.content
                 if isinstance(e, TheTileLeftANote):
                     headers = e.headers
-                if e.emit_content_type:
-                    headers.setdefault('Content-Type', mimetype)
+                    if e.emit_content_type:
+                        headers.setdefault('Content-Type', mimetype)
 
             finally:
                 if lockCoord:
