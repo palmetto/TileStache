@@ -448,7 +448,7 @@ class Layer:
 
                     tile_from = 'layer.render()'
 
-            except TheTileLeftANote as e:
+            except (TheTileLeftANote, TheServerLeftANote) as e:
                 headers = e.headers
                 status_code = e.status_code
                 body = e.content
