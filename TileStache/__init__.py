@@ -392,15 +392,15 @@ class WSGITileServer:
 
         status_code, headers, content = requestHandler2(self.config, path_info, query_string, script_name)
 
-        return self._response(start_response, status_code, bytes(content), headers)
+        return self._response(start_response, status_code, bytes(content, "utf-8"), headers)
 
     def _response(self, start_response, code, content='', headers=None):
         """
         """
         headers = headers or Headers([])
 
-        if content:
-            headers.setdefault('Content-Length', str(len(content)))
+        # if content:
+        #     headers.setdefault('Content-Length', str(len(content)))
 
         responses = httplib.responses
         responses.update({422: 'Unprocessable Entity'})

@@ -453,8 +453,8 @@ class Layer:
                 status_code = e.status_code
                 body = e.content
 
-                if e.emit_content_type:
-                    headers.setdefault('Content-Type', mimetype)
+                # if e.emit_content_type:
+                #     headers.setdefault('Content-Type', mimetype)
 
             finally:
                 if lockCoord:
